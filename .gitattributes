@@ -1,0 +1,8 @@
+* text=auto eol=lf
+
+# Built card bundle (committed: the integration serves it)
+custom_components/wled_more_info/frontend/** linguist-generated=true -diff
+package-lock.json linguist-generated=true -diff
+
+*.png binary
+*.jpg binary

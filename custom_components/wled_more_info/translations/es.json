@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "WLED More-Info",
+        "description": "Agrega la tarjeta more-info de WLED a tus dashboards. Funciona con todos los dispositivos de la integración WLED: no hay nada más que configurar."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Ya está configurada. Solo se permite una configuración."
+    }
+  }
+}

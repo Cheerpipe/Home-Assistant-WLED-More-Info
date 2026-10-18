@@ -1,0 +1,42 @@
+{
+  "name": "wled-more-info",
+  "version": "0.1.0",
+  "description": "Home Assistant integration with a native-looking more-info card for WLED lights; the device is reached through Home Assistant.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Cheerpipe/Home-Assistant-WLED-More-Info.git"
+  },
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:py": "uv run --no-project --python 3.14 --with-requirements requirements_test.txt pytest tests"
+  },
+  "dependencies": {
+    "@mdi/js": "7.4.47",
+    "lit": "3.3.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "esbuild": "0.28.2",
+    "eslint": "10.12.0",
+    "eslint-plugin-lit": "2.3.1",
+    "eslint-plugin-wc": "3.1.0",
+    "globals": "17.13.0",
+    "happy-dom": "21.0.3",
+    "home-assistant-js-websocket": "9.7.1",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2",
+    "vitest": "5.0.5"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

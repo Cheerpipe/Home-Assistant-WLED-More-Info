@@ -1,0 +1,14 @@
+{
+  "domain": "wled_more_info",
+  "name": "WLED More-Info",
+  "codeowners": ["@Cheerpipe"],
+  "config_flow": true,
+  "dependencies": ["frontend", "http", "websocket_api", "wled"],
+  "documentation": "https://github.com/Cheerpipe/Home-Assistant-WLED-More-Info",
+  "integration_type": "service",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/Cheerpipe/Home-Assistant-WLED-More-Info/issues",
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "0.1.0"
+}

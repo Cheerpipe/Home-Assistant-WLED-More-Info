@@ -1,0 +1,145 @@
+# WLED More-Info
+
+A Home Assistant integration with a **more-info card for
+[WLED](https://kno.wled.ge/) lights**: the native light more-info (same header,
+brightness slider, color wheel, color temperature and button bar), plus what
+Home Assistant's WLED integration doesn't show:
+
+- the **secondary color** (and the tertiary one, when the effect uses it),
+- the **palettes with their previews**, like in WLED's own interface,
+- the **sliders and options of the current effect**, with WLED's own names
+  ("Duty cycle", "Clouds", "Cozy"…), only the ones the effect uses,
+- a **searchable effect list grouped like WLED's** (strip, matrix, strip on
+  matrix, audio reactive, uses the palette) and the **presets** in the same
+  kind of list.
+
+**Home Assistant talks to the device for the card**, so all of it works with
+Home Assistant opened over https, in the companion app and away from home. The
+browser never calls the WLED device.
+
+Requires Home Assistant **2026.10** or newer and the
+[WLED integration](https://www.home-assistant.io/integrations/wled/).
+
+| The card                                   | Effect settings                                   | Presets                                              |
+| ------------------------------------------ | ------------------------------------------------- | ---------------------------------------------------- |
+| ![WLED card](docs/images/wled_main.png)    | ![Effect settings](docs/images/wled_settings.png) | ![Presets](docs/images/wled_presets.png)             |
+| **Palettes with previews**                 | **Effects**                                       | **Effects filtered by category**                     |
+| ![Palettes](docs/images/wled_palettes.png) | ![Effects](docs/images/wled_effects.png)          | ![Audio effects](docs/images/wled_effects_audio.png) |
+
+## Installation
+
+1. **HACS:** add this repository as a custom repository (type _Integration_),
+   install _WLED More-Info_ and restart Home Assistant.
+   **Manual:** copy `custom_components/wled_more_info` into your
+   `config/custom_components/` folder and restart.
+2. **Settings → Devices & services → Add integration → WLED More-Info.** There
+   is nothing to configure: it works with every device of the WLED
+   integration.
+3. Reload the browser. The card is loaded on every page by the integration; no
+   dashboard resource is needed.
+
+If you used the WLED card from
+[More-Info Popup Card](https://github.com/Cheerpipe/Home-Assistant-More-Info-Popup-Card)
+0.5 / 0.6, update that card to 0.7 or newer, which no longer includes it.
+Your dashboards keep working: the `type` is the same.
+
+## The card
+
+```yaml
+type: custom:more-info-wled-state-card
+entity: light.wled_segment_1
+show_state: true # header with the brightness and the last change
+show_last_changed: true
+show_effects: true # effect and preset rows
+appearance: plain # plain (like more-info) | card
+```
+
+Everything is also in the visual editor. The card is meant for **segment
+lights of the WLED integration** (`light.wled`, `light.wled_segment_1`…). The
+"main" light WLED creates for multi-segment devices only has a brightness, so
+it gets the plain power and brightness controls, like the native more-info.
+
+### The button bar
+
+Like the light more-info, the round buttons under the main control switch what
+it shows:
+
+| Button             | Main control                                                                                                                                                    |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ⏻                  | turns the segment on / off                                                                                                                                      |
+| brightness         | the native brightness slider                                                                                                                                    |
+| color wheel        | the native color wheel (primary color)                                                                                                                          |
+| **filled circle**  | **secondary color**: a color wheel for WLED's second color slot. With effects that use a third color, the wheel switches between both; ⊘ sets the slot to black |
+| color temperature  | the native color temperature picker, for segments that have it                                                                                                  |
+| **palette swatch** | **palettes**: every palette with its preview. The `*` palettes are drawn with the segment's colors                                                              |
+| **sliders**        | **effect settings**: speed, intensity and the effect's own sliders and options, named like in WLED                                                              |
+
+The secondary color and palette buttons are disabled when the current effect
+doesn't use them, like WLED hides them in its own interface.
+
+### Effects and presets
+
+Under the button bar there are two rows: **Effect** (with the effect's
+categories) and **Preset**. Each opens a searchable list: inside a popup as a
+native sub-view with a back arrow, on a dashboard right below the row. The
+effect list can be filtered by category:
+
+| Icon (Material Design) | Category                                              |
+| ---------------------- | ----------------------------------------------------- |
+| LED strip              | strip (1D)                                            |
+| grid                   | matrix (2D)                                           |
+| square outline         | strip effect expanded on a matrix (1.5D, MoonModules) |
+| speaker                | audio reactive, volume (needs the audio usermod)      |
+| waveform               | audio reactive, frequency                             |
+| palette                | uses the palette                                      |
+
+### One popup for all your WLED lights
+
+With [More-Info Popup Card](https://github.com/Cheerpipe/Home-Assistant-More-Info-Popup-Card),
+this single card makes every WLED light on a view open the WLED card instead of
+the native more-info:
+
+```yaml
+type: custom:more-info-popup-card
+popup_id: wled_lights
+replace_more_info: true
+match:
+  integration: wled
+  domain: light
+cards:
+  - type: custom:more-info-wled-state-card
+    entity: this
+```
+
+## How it works
+
+Brightness, the primary color, the effect, the palette, the preset, speed and
+intensity go through the WLED integration's entities, like any card. The rest
+isn't exposed by the WLED integration, so this integration adds three
+websocket commands that the card uses:
+
+| Command                      | What it does                                                                                                                                                   |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `wled_more_info/catalog`     | Effects, effect metadata (`/json/fxdata`) and palettes with their previews (`/json/palx`). Read once per device and firmware, then kept in memory and on disk. |
+| `wled_more_info/state`       | The device's segments (secondary / tertiary colors, custom sliders, options). Reads that arrive together share one request.                                    |
+| `wled_more_info/set_segment` | Changes the light's own segment: colors, palette, effect, sliders and options only.                                                                            |
+
+They take the `entity_id` of a WLED light, never an address: requests go
+through the WLED integration's own connection to that device, so nothing else
+on your network can be reached. Reading needs permission to read the light,
+changing it permission to control it.
+
+## Development
+
+```bash
+npm install
+npm run build      # card → custom_components/wled_more_info/frontend/
+npm run typecheck && npm run lint && npm test
+npm run test:py    # integration tests (needs uv)
+```
+
+The built card is committed, since the integration serves it.
+
+## License
+
+MIT

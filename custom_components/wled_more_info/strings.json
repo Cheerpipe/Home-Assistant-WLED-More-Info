@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "WLED More-Info",
+        "description": "Adds the WLED more-info card to your dashboards. It works with every WLED device of the WLED integration: nothing else to configure."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]"
+    }
+  }
+}

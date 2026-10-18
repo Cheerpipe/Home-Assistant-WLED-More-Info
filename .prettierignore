@@ -1,0 +1,4 @@
+custom_components/*/frontend/
+package-lock.json
+.venv/
+.pytest_cache/
