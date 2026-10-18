@@ -13,12 +13,22 @@ Home Assistant's WLED integration doesn't show:
   matrix, audio reactive, uses the palette) and the **presets** in the same
   kind of list.
 
+**It replaces the more-info of every WLED light in Home Assistant**: open a
+WLED light from any dashboard, the search, the history or the app, and Home
+Assistant's own more-info dialog shows the WLED controls. No card to add.
+**Light groups** made of WLED segments get it too, and change all their members
+at once.
+
 **Home Assistant talks to the device for the card**, so all of it works with
 Home Assistant opened over https, in the companion app and away from home. The
 browser never calls the WLED device.
 
 Requires Home Assistant **2026.10** or newer and the
 [WLED integration](https://www.home-assistant.io/integrations/wled/).
+
+| Any WLED light's more-info                       | A group of WLED lights               |
+| ------------------------------------------------ | ------------------------------------ |
+| ![Native more-info](docs/images/wled_native.png) | ![Group](docs/images/wled_group.png) |
 
 | The card                                   | Effect settings                                   | Presets                                              |
 | ------------------------------------------ | ------------------------------------------------- | ---------------------------------------------------- |
@@ -32,16 +42,36 @@ Requires Home Assistant **2026.10** or newer and the
    install _WLED More-Info_ and restart Home Assistant.
    **Manual:** copy `custom_components/wled_more_info` into your
    `config/custom_components/` folder and restart.
-2. **Settings → Devices & services → Add integration → WLED More-Info.** There
-   is nothing to configure: it works with every device of the WLED
-   integration.
-3. Reload the browser. The card is loaded on every page by the integration; no
-   dashboard resource is needed.
+2. **Settings → Devices & services → Add integration → WLED More-Info** and
+   leave **Use the WLED card in every WLED light's more-info** on. It works
+   with every device of the WLED integration.
+3. Reload the browser (in the app: close and reopen it). That's it: every WLED
+   light's more-info now shows the WLED controls. The card is loaded on every
+   page by the integration; no dashboard resource is needed.
+
+The option can be changed later in the integration's **Configure** button.
+With it off, the more-info stays native and the card is only where you add it.
 
 If you used the WLED card from
 [More-Info Popup Card](https://github.com/Cheerpipe/Home-Assistant-More-Info-Popup-Card)
 0.5 / 0.6, update that card to 0.7 or newer, which no longer includes it.
 Your dashboards keep working: the `type` is the same.
+
+## Everywhere: the native more-info
+
+With the option on, Home Assistant's own more-info dialog of these lights
+shows the WLED controls instead of the native light controls:
+
+- **WLED segment lights** (`light.wled`, `light.wled_segment_1`…).
+- **Light groups whose members are all WLED segment lights**, even from
+  different WLED devices. Effect, colors, secondary color, palette, speed,
+  intensity and the effect's options go to every member; the members are
+  still listed below, like in the native dialog. The preset row shows when all
+  members are on the same device.
+
+Everything else in the dialog stays native: header, history, settings, the ⋮
+menu, related, and every other entity. The WLED "main" light (brightness only)
+keeps the native controls.
 
 ## The card
 
@@ -54,10 +84,11 @@ show_effects: true # effect and preset rows
 appearance: plain # plain (like more-info) | card
 ```
 
-Everything is also in the visual editor. The card is meant for **segment
-lights of the WLED integration** (`light.wled`, `light.wled_segment_1`…). The
-"main" light WLED creates for multi-segment devices only has a brightness, so
-it gets the plain power and brightness controls, like the native more-info.
+The same controls as a card, for dashboards and popups. Everything is also in
+the visual editor. `entity` is a **WLED segment light** (`light.wled`,
+`light.wled_segment_1`…) or a **light group of them**. The "main" light WLED
+creates for multi-segment devices only has a brightness, so it gets the plain
+power and brightness controls, like the native more-info.
 
 ### The button bar
 
@@ -93,11 +124,12 @@ effect list can be filtered by category:
 | waveform               | audio reactive, frequency                             |
 | palette                | uses the palette                                      |
 
-### One popup for all your WLED lights
+### Inside a More-Info Popup Card popup
 
-With [More-Info Popup Card](https://github.com/Cheerpipe/Home-Assistant-More-Info-Popup-Card),
-this single card makes every WLED light on a view open the WLED card instead of
-the native more-info:
+With the option on, you don't need a popup for this. To build your own WLED
+popup with other cards around the WLED card, use
+[More-Info Popup Card](https://github.com/Cheerpipe/Home-Assistant-More-Info-Popup-Card)
+with `entity: this`:
 
 ```yaml
 type: custom:more-info-popup-card

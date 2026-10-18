@@ -18,7 +18,13 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.loader import async_get_integration
 
-from .const import DOMAIN, FRONTEND_FILE, FRONTEND_URL
+from .const import (
+    CONF_REPLACE_MORE_INFO,
+    DEFAULT_REPLACE_MORE_INFO,
+    DOMAIN,
+    FRONTEND_FILE,
+    FRONTEND_URL,
+)
 from .device import WledProxy
 from .websocket import async_register_commands
 
@@ -41,20 +47,25 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     return True
 
 
-def _module_url(version: str) -> str:
-    # The version in the URL makes browsers load each release once.
-    return f"{FRONTEND_URL}/{FRONTEND_FILE}?v={version}"
+def _module_url(version: str, entry: ConfigEntry) -> str:
+    """The card's module; its query carries the version and the options.
+
+    The version makes browsers load each release once; the frontend reads
+    the options from its own URL (`import.meta.url`).
+    """
+    replace = entry.options.get(CONF_REPLACE_MORE_INFO, DEFAULT_REPLACE_MORE_INFO)
+    return f"{FRONTEND_URL}/{FRONTEND_FILE}?v={version}&replace={int(replace)}"
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Add the card to every page."""
     integration = await async_get_integration(hass, DOMAIN)
-    add_extra_js_url(hass, _module_url(str(integration.version)))
+    url = _module_url(str(integration.version), entry)
+    add_extra_js_url(hass, url)
+    entry.async_on_unload(lambda: remove_extra_js_url(hass, url))
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Stop adding the card to new pages."""
-    integration = await async_get_integration(hass, DOMAIN)
-    remove_extra_js_url(hass, _module_url(str(integration.version)))
+    """Stop adding the card to new pages (`async_on_unload`)."""
     return True

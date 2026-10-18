@@ -28,7 +28,8 @@ export const en = {
   "wled.option.o3": "Option 3",
   "wled.color_black": "Black (off)",
   "wled.not_used": "Not used by this effect",
-  "wled.not_wled": "Pick a light of the WLED integration.",
+  "wled.not_wled":
+    "Pick a WLED light, or a light group made only of WLED segment lights.",
   "controls.show_effects": "Show effects",
   "wled_card.name": "WLED more-info",
   "wled_card.description":

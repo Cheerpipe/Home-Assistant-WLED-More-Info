@@ -70,7 +70,12 @@ import {
   loadEffects,
   type EffectPickerParams,
 } from "./effect-picker";
-import { resolveWledLink, type WledLink, type WledLinkError } from "./link";
+import {
+  groupMembers,
+  resolveWledLight,
+  type WledLink,
+  type WledLinkError,
+} from "./link";
 import {
   hsToRgb,
   paletteGradient,
@@ -224,16 +229,27 @@ export class MoreInfoWledStateCard extends LitElement {
     return this._config && this.hass?.states[this._config.entity];
   }
 
-  /** The light and its device, once linked (`link.ts`). */
+  /** The light and its device, once linked (`link.ts`); a group's first member. */
   private get _target(): WledTarget | undefined {
-    if (typeof this._link !== "object" || !this.hass || !this._config) {
-      return undefined;
-    }
+    if (typeof this._link !== "object" || !this.hass) return undefined;
     return {
       hass: this.hass,
-      entityId: this._config.entity,
+      entityId: this._link.entityId,
       deviceId: this._link.deviceId,
     };
+  }
+
+  /** Every light written: the light, or each member of a group. */
+  private get _links(): WledLink[] {
+    if (typeof this._link !== "object") return [];
+    return this._link.members ?? [this._link];
+  }
+
+  /** The entity of each linked light for a key (palette, speed…). */
+  private _entities(key: "palette" | "speed" | "intensity"): string[] {
+    return this._links
+      .map((link) => link[key])
+      .filter((id): id is string => Boolean(id));
   }
 
   private get _deviceId(): string | undefined {
@@ -257,10 +273,12 @@ export class MoreInfoWledStateCard extends LitElement {
         "ha-control-button-group",
       ]).then(() => this.requestUpdate());
     }
-    const key = this._config.entity;
+    // A group links again when its members change.
+    const members = groupMembers(this.hass, this._config.entity);
+    const key = [this._config.entity, ...(members ?? [])].join("|");
     if (this._linkKey !== key && this.hass.entities[this._config.entity]) {
       this._linkKey = key;
-      resolveWledLink(this.hass, this._config.entity).then(
+      resolveWledLight(this.hass, this._config.entity).then(
         (link) => {
           if (this._linkKey !== key) return;
           this._link = link;
@@ -326,11 +344,17 @@ export class MoreInfoWledStateCard extends LitElement {
     this._segment = segments.find((seg) => seg.id === segment);
   }
 
-  /** Writes to the device, then shows what it answered. */
+  /** Writes to every linked light, then shows what the first answered. */
   private async _setSegment(data: SegmentData) {
     const target = this._target;
     if (!target) return;
+    const others = this._links.slice(1).map((link) => ({
+      ...target,
+      entityId: link.entityId,
+      deviceId: link.deviceId,
+    }));
     try {
+      others.forEach((other) => setSegment(other, data).catch(() => undefined));
       this._applySegments(await setSegment(target, data));
     } catch {
       this._scheduleRefresh();
@@ -554,10 +578,10 @@ export class MoreInfoWledStateCard extends LitElement {
   private _palettePicker() {
     const current = this._currentPalette;
     const select = (name: string) => {
-      const entity = this._paletteEntity;
-      if (entity) {
+      const entities = this._entities("palette");
+      if (entities.length) {
         this.hass!.callService("select", "select_option", {
-          entity_id: entity,
+          entity_id: entities,
           option: name,
         });
       } else {
@@ -751,14 +775,18 @@ export class MoreInfoWledStateCard extends LitElement {
     return {
       kind,
       entityId: this._config!.entity,
+      wledEntity:
+        typeof this._link === "object" ? this._link.entityId : undefined,
       presetEntity: this._presetEntity,
       deviceId: this._deviceError ? undefined : this._deviceId,
       current: this._effectName,
     };
   }
 
+  /** WLED's preset select; a group only has one when all members share it. */
   private get _presetEntity(): string | undefined {
-    return typeof this._link === "object" ? this._link.preset : undefined;
+    const presets = new Set(this._links.map((link) => link.preset));
+    return presets.size === 1 ? [...presets][0] : undefined;
   }
 
   private _openPicker(ev: Event, kind: PickerKind) {
@@ -908,12 +936,16 @@ export class MoreInfoWledStateCard extends LitElement {
   }
 
   private _setSlider(key: SliderKey, value: number) {
-    const link = typeof this._link === "object" ? this._link : undefined;
-    const entity =
-      key === "sx" ? link?.speed : key === "ix" ? link?.intensity : undefined;
-    if (entity) {
+    const entities =
+      key === "sx"
+        ? this._entities("speed")
+        : key === "ix"
+          ? this._entities("intensity")
+          : [];
+    // Through HA when every light has the number entity.
+    if (entities.length && entities.length === this._links.length) {
       this.hass!.callService("number", "set_value", {
-        entity_id: entity,
+        entity_id: entities,
         value,
       });
     } else {

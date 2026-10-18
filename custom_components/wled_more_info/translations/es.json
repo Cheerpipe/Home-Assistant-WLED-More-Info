@@ -3,11 +3,30 @@
     "step": {
       "user": {
         "title": "WLED More-Info",
-        "description": "Agrega la tarjeta more-info de WLED a tus dashboards. Funciona con todos los dispositivos de la integración WLED: no hay nada más que configurar."
+        "description": "Agrega la tarjeta more-info de WLED. Funciona con todos los dispositivos de la integración WLED.",
+        "data": {
+          "replace_more_info": "Usar la tarjeta WLED en el more-info de cada luz WLED"
+        },
+        "data_description": {
+          "replace_more_info": "En todo Home Assistant (dashboards, búsqueda, historial, la app), al abrir una luz de segmento WLED se muestra la tarjeta WLED dentro del more-info nativo. Recarga el navegador después de cambiarlo."
+        }
       }
     },
     "abort": {
       "single_instance_allowed": "Ya está configurada. Solo se permite una configuración."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opciones de WLED More-Info",
+        "data": {
+          "replace_more_info": "Usar la tarjeta WLED en el more-info de cada luz WLED"
+        },
+        "data_description": {
+          "replace_more_info": "En todo Home Assistant (dashboards, búsqueda, historial, la app), al abrir una luz de segmento WLED se muestra la tarjeta WLED dentro del more-info nativo. Recarga el navegador después de cambiarlo."
+        }
+      }
     }
   }
 }

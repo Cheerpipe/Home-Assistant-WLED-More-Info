@@ -26,7 +26,13 @@ export const wledCardForm = () => ({
       name: "entity",
       required: true,
       selector: {
-        entity: { filter: { domain: "light", integration: "wled" } },
+        // WLED segment lights, or a light group of them.
+        entity: {
+          filter: [
+            { domain: "light", integration: "wled" },
+            { domain: "light", integration: "group" },
+          ],
+        },
       },
     },
     {

@@ -31,6 +31,8 @@ export interface EffectPickerParams {
   kind?: "effect" | "preset";
   presetEntity?: string;
   entityId: string;
+  /** The WLED light read for effect details (a group's first member). */
+  wledEntity?: string;
   /** Device of the light; without it the picker has no effect details. */
   deviceId?: string;
   /** Current effect when HA has none (the light is off). */
@@ -93,7 +95,8 @@ export class MoreInfoWledEffectPicker extends LitElement {
     const hass = this.hass;
     if (!deviceId || !hass || deviceId === this._loadedDevice) return;
     this._loadedDevice = deviceId;
-    loadEffects({ hass, entityId: this.params!.entityId, deviceId }).then(
+    const entityId = this.params!.wledEntity ?? this.params!.entityId;
+    loadEffects({ hass, entityId, deviceId }).then(
       (effects) => {
         this._effects = new Map(effects.map((fx) => [fx.name, fx]));
       },

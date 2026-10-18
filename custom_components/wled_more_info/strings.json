@@ -3,11 +3,30 @@
     "step": {
       "user": {
         "title": "WLED More-Info",
-        "description": "Adds the WLED more-info card to your dashboards. It works with every WLED device of the WLED integration: nothing else to configure."
+        "description": "Adds the WLED more-info card. It works with every WLED device of the WLED integration.",
+        "data": {
+          "replace_more_info": "Use the WLED card in every WLED light's more-info"
+        },
+        "data_description": {
+          "replace_more_info": "Everywhere in Home Assistant (dashboards, search, history, the app), opening a WLED segment light shows the WLED card inside the native more-info. Reload the browser after changing it."
+        }
       }
     },
     "abort": {
       "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "WLED More-Info options",
+        "data": {
+          "replace_more_info": "Use the WLED card in every WLED light's more-info"
+        },
+        "data_description": {
+          "replace_more_info": "Everywhere in Home Assistant (dashboards, search, history, the app), opening a WLED segment light shows the WLED card inside the native more-info. Reload the browser after changing it."
+        }
+      }
     }
   }
 }

@@ -30,7 +30,8 @@ export const es: Record<keyof typeof en, string> = {
   "wled.option.o3": "Opción 3",
   "wled.color_black": "Negro (apagado)",
   "wled.not_used": "Este efecto no lo usa",
-  "wled.not_wled": "Elige una luz de la integración WLED.",
+  "wled.not_wled":
+    "Elige una luz WLED o un grupo de luces formado solo por segmentos WLED.",
   "controls.show_effects": "Mostrar efectos",
   "wled_card.name": "More-info de WLED",
   "wled_card.description":

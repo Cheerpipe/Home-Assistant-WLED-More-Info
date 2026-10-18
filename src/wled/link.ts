@@ -5,10 +5,15 @@
  * `number.py`): `<mac>_<segment>`, `<mac>_palette_<segment>`,
  * `<mac>_speed_<segment>`, `<mac>_intensity_<segment>`; the main light
  * (brightness only, no effects) is the bare `<mac>`.
+ *
+ * A light group whose members are all WLED segment lights links to its
+ * members: the first one is read, all of them are written.
  */
 import type { HomeAssistant } from "../ha/types";
 
 export interface WledLink {
+  /** The WLED segment light (a member, for a group). */
+  entityId: string;
   segment: number;
   /** Device of the light: the cache key of its effects and palettes. */
   deviceId: string;
@@ -17,6 +22,8 @@ export interface WledLink {
   preset?: string;
   speed?: string;
   intensity?: string;
+  /** Every member, for a group of WLED lights (this link is the first). */
+  members?: WledLink[];
 }
 
 export type WledLinkError = "not_wled" | "main_light";
@@ -62,6 +69,7 @@ export const resolveWledLink = async (
   );
   const { mac, segment } = parsed;
   return {
+    entityId,
     segment,
     deviceId,
     palette: byUniqueId.get(`${mac}_palette_${segment}`),
@@ -69,4 +77,33 @@ export const resolveWledLink = async (
     intensity: byUniqueId.get(`${mac}_intensity_${segment}`),
     preset: byUniqueId.get(`${mac}_preset`),
   };
+};
+
+/** Members of a light group, when the entity is one. */
+export const groupMembers = (
+  hass: HomeAssistant,
+  entityId: string,
+): string[] | undefined => {
+  if (hass.entities[entityId]?.platform === "wled") return undefined;
+  const members = hass.states[entityId]?.attributes.entity_id;
+  return Array.isArray(members) && members.length
+    ? (members as string[])
+    : undefined;
+};
+
+/** A WLED segment light, or a group of them (see `WledLink.members`). */
+export const resolveWledLight = async (
+  hass: HomeAssistant,
+  entityId: string,
+): Promise<WledLink | WledLinkError> => {
+  const members = groupMembers(hass, entityId);
+  if (!members) return resolveWledLink(hass, entityId);
+  const links = await Promise.all(
+    members.map((member) => resolveWledLink(hass, member)),
+  );
+  const segments = links.filter(
+    (link): link is WledLink => typeof link === "object",
+  );
+  if (segments.length !== links.length) return "not_wled";
+  return { ...segments[0]!, members: segments };
 };
