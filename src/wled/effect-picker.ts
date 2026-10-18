@@ -22,6 +22,7 @@ import { fireEvent } from "../ha/fire-event";
 import type { HomeAssistant } from "../ha/types";
 import { localize, type TranslationKey } from "../localize/localize";
 import { loadCatalog, type WledTarget } from "./api";
+import { LoadCache } from "./cache";
 import { parseEffects, type EffectCategory, type EffectMeta } from "./meta";
 
 export const EFFECT_PICKER_TAG = "more-info-wled-effect-picker";
@@ -61,19 +62,17 @@ export const CATEGORY_ICONS: Partial<Record<Filter, string>> = {
 };
 
 /** Parsed effects per device, shared by the card and the picker. */
-const effectsByDevice = new Map<string, Promise<EffectMeta[]>>();
+const effectsByDevice = new LoadCache<EffectMeta[]>();
 
-export const loadEffects = (target: WledTarget): Promise<EffectMeta[]> => {
-  let effects = effectsByDevice.get(target.deviceId);
-  if (!effects) {
-    effects = loadCatalog(target).then((catalog) =>
+export const loadEffects = (target: WledTarget): Promise<EffectMeta[]> =>
+  effectsByDevice.get(target.deviceId, () =>
+    loadCatalog(target).then((catalog) =>
       parseEffects(catalog.effectNames, catalog.fxdata),
-    );
-    effectsByDevice.set(target.deviceId, effects);
-    effects.catch(() => effectsByDevice.delete(target.deviceId));
-  }
-  return effects;
-};
+    ),
+  );
+
+export const cachedEffects = (deviceId: string): EffectMeta[] | undefined =>
+  effectsByDevice.peek(deviceId);
 
 export class MoreInfoWledEffectPicker extends LitElement {
   @property({ attribute: false }) accessor hass: HomeAssistant | undefined;

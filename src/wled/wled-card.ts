@@ -55,6 +55,8 @@ import {
   type CardAppearance,
 } from "../controls/styles";
 import {
+  cachedCatalog,
+  cachedSegments,
   getSegments,
   isMissingIntegration,
   loadCatalog,
@@ -67,11 +69,13 @@ import {
 import {
   CATEGORY_ICONS,
   EFFECT_PICKER_TAG,
+  cachedEffects,
   loadEffects,
   type EffectPickerParams,
 } from "./effect-picker";
 import {
-  groupMembers,
+  cachedLink,
+  linkKey,
   resolveWledLight,
   type WledLink,
   type WledLinkError,
@@ -274,10 +278,15 @@ export class MoreInfoWledStateCard extends LitElement {
       ]).then(() => this.requestUpdate());
     }
     // A group links again when its members change.
-    const members = groupMembers(this.hass, this._config.entity);
-    const key = [this._config.entity, ...(members ?? [])].join("|");
+    const key = linkKey(this.hass, this._config.entity);
     if (this._linkKey !== key && this.hass.entities[this._config.entity]) {
       this._linkKey = key;
+      // Known on this page already: draw complete now, refresh below.
+      const cached = cachedLink(this.hass, this._config.entity);
+      if (cached) {
+        this._link = cached;
+        this._applyCached();
+      }
       resolveWledLight(this.hass, this._config.entity).then(
         (link) => {
           if (this._linkKey !== key) return;
@@ -295,6 +304,17 @@ export class MoreInfoWledStateCard extends LitElement {
       this._lastUpdated = updated;
       this._scheduleRefresh();
     }
+  }
+
+  /** What this page already knows about the device, synchronously. */
+  private _applyCached() {
+    const deviceId = this._deviceId;
+    if (!deviceId) return;
+    const effects = cachedEffects(deviceId);
+    if (effects) this._effects = new Map(effects.map((fx) => [fx.name, fx]));
+    this._catalog = cachedCatalog(deviceId) ?? this._catalog;
+    const segments = cachedSegments(deviceId);
+    if (segments) this._applySegments(segments);
   }
 
   private _loadDevice() {

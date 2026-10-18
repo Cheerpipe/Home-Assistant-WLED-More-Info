@@ -10,6 +10,7 @@
  * members: the first one is read, all of them are written.
  */
 import type { HomeAssistant } from "../ha/types";
+import { LoadCache } from "./cache";
 
 export interface WledLink {
   /** The WLED segment light (a member, for a group). */
@@ -91,8 +92,26 @@ export const groupMembers = (
     : undefined;
 };
 
+const links = new LoadCache<WledLink | WledLinkError>();
+
+/** Cache key of a light's link: a group links again when its members change. */
+export const linkKey = (hass: HomeAssistant, entityId: string): string =>
+  [entityId, ...(groupMembers(hass, entityId) ?? [])].join("|");
+
+/** The link of a light, if it was resolved on this page already. */
+export const cachedLink = (
+  hass: HomeAssistant,
+  entityId: string,
+): WledLink | WledLinkError | undefined => links.peek(linkKey(hass, entityId));
+
 /** A WLED segment light, or a group of them (see `WledLink.members`). */
-export const resolveWledLight = async (
+export const resolveWledLight = (
+  hass: HomeAssistant,
+  entityId: string,
+): Promise<WledLink | WledLinkError> =>
+  links.get(linkKey(hass, entityId), () => linkLight(hass, entityId));
+
+const linkLight = async (
   hass: HomeAssistant,
   entityId: string,
 ): Promise<WledLink | WledLinkError> => {

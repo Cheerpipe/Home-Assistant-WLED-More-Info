@@ -7,6 +7,7 @@
  * companion app, remote access).
  */
 import type { HomeAssistant } from "../ha/types";
+import { LoadCache } from "./cache";
 import type { PaletteStops } from "./meta";
 
 export interface WledSegment {
@@ -51,29 +52,36 @@ export const WS_PREFIX = "wled_more_info";
 export const isMissingIntegration = (err: unknown): boolean =>
   (err as { code?: string } | undefined)?.code === "unknown_command";
 
-const catalogs = new Map<string, Promise<WledCatalog>>();
+const catalogs = new LoadCache<WledCatalog>();
+
+/** Last known segments of each device, to draw before the next read. */
+const segments = new LoadCache<WledSegment[]>();
 
 /** Effects, metadata and palettes of a device; cached per device. */
-export const loadCatalog = (target: WledTarget): Promise<WledCatalog> => {
-  let catalog = catalogs.get(target.deviceId);
-  if (!catalog) {
-    catalog = target.hass.callWS<WledCatalog>({
+export const loadCatalog = (target: WledTarget): Promise<WledCatalog> =>
+  catalogs.get(target.deviceId, () =>
+    target.hass.callWS<WledCatalog>({
       type: `${WS_PREFIX}/catalog`,
       entity_id: target.entityId,
-    });
-    catalogs.set(target.deviceId, catalog);
-    catalog.catch(() => catalogs.delete(target.deviceId));
-  }
-  return catalog;
-};
+    }),
+  );
 
-export const getSegments = async (target: WledTarget): Promise<WledSegment[]> =>
-  (
-    await target.hass.callWS<{ seg: WledSegment[] }>({
-      type: `${WS_PREFIX}/state`,
-      entity_id: target.entityId,
-    })
-  ).seg;
+export const cachedCatalog = (deviceId: string): WledCatalog | undefined =>
+  catalogs.peek(deviceId);
+
+export const cachedSegments = (deviceId: string): WledSegment[] | undefined =>
+  segments.peek(deviceId);
+
+export const getSegments = async (
+  target: WledTarget,
+): Promise<WledSegment[]> => {
+  const { seg } = await target.hass.callWS<{ seg: WledSegment[] }>({
+    type: `${WS_PREFIX}/state`,
+    entity_id: target.entityId,
+  });
+  segments.set(target.deviceId, seg);
+  return seg;
+};
 
 /**
  * Changes the light's segment (the server picks it from the entity);
@@ -82,11 +90,12 @@ export const getSegments = async (target: WledTarget): Promise<WledSegment[]> =>
 export const setSegment = async (
   target: WledTarget,
   data: SegmentData,
-): Promise<WledSegment[]> =>
-  (
-    await target.hass.callWS<{ seg: WledSegment[] }>({
-      type: `${WS_PREFIX}/set_segment`,
-      entity_id: target.entityId,
-      data,
-    })
-  ).seg;
+): Promise<WledSegment[]> => {
+  const { seg } = await target.hass.callWS<{ seg: WledSegment[] }>({
+    type: `${WS_PREFIX}/set_segment`,
+    entity_id: target.entityId,
+    data,
+  });
+  segments.set(target.deviceId, seg);
+  return seg;
+};

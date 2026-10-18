@@ -7,6 +7,7 @@
  */
 import { localize } from "./localize/localize";
 import { replaceFromUrl, replaceNativeMoreInfo } from "./native-more-info";
+import { preloadWledLights } from "./preload";
 import { WLED_CARD_TYPE } from "./wled/wled-card";
 
 declare const __VERSION__: string;
@@ -23,7 +24,10 @@ if (!window.customCards.some((card) => card.type === WLED_CARD_TYPE)) {
   });
 }
 
-if (replaceFromUrl(import.meta.url)) replaceNativeMoreInfo();
+if (replaceFromUrl(import.meta.url)) {
+  replaceNativeMoreInfo();
+  preloadWledLights();
+}
 
 console.info(
   `%c WLED-MORE-INFO %c ${__VERSION__} `,
