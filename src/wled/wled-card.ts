@@ -93,6 +93,9 @@ import { WLED_CARD_EDITOR_TAG } from "./editor";
 
 export const WLED_CARD_TYPE = "more-info-wled-state-card";
 
+/** Cheerpipe/relative-light-group: only members that are on change. */
+const RELATIVE_GROUP = "relative_light_group";
+
 export interface WledCardConfig extends LovelaceCardConfig {
   entity: string;
   show_state?: boolean;
@@ -181,6 +184,8 @@ export class MoreInfoWledStateCard extends LitElement {
 
   private _lastUpdated?: string;
 
+  private _primaryEntity?: string;
+
   public setConfig(config: WledCardConfig): void {
     if (!config?.entity) throw new Error('"entity" is required');
     this._config = config;
@@ -235,29 +240,50 @@ export class MoreInfoWledStateCard extends LitElement {
 
   /** The light and its device, once linked (`link.ts`); a group's first member. */
   private get _target(): WledTarget | undefined {
-    if (typeof this._link !== "object" || !this.hass) return undefined;
+    const primary = this._primary;
+    if (!primary || !this.hass) return undefined;
     return {
       hass: this.hass,
-      entityId: this._link.entityId,
-      deviceId: this._link.deviceId,
+      entityId: primary.entityId,
+      deviceId: primary.deviceId,
     };
   }
 
-  /** Every light written: the light, or each member of a group. */
+  /** The light, or each member of a group. */
   private get _links(): WledLink[] {
     if (typeof this._link !== "object") return [];
     return this._link.members ?? [this._link];
   }
 
-  /** The entity of each linked light for a key (palette, speed…). */
+  /**
+   * The lights written. A Relative Light Group (relative_light_group)
+   * changes colors and effects of its members that are on only, so the
+   * WLED settings follow it; with every member off, all of them.
+   */
+  private get _writeLinks(): WledLink[] {
+    const links = this._links;
+    const platform = this.hass?.entities[this._config?.entity ?? ""]?.platform;
+    if (platform !== RELATIVE_GROUP || links.length < 2) return links;
+    const on = links.filter(
+      (link) => this.hass!.states[link.entityId]?.state === "on",
+    );
+    return on.length ? on : links;
+  }
+
+  /** The light shown: the first one written. */
+  private get _primary(): WledLink | undefined {
+    return this._writeLinks[0];
+  }
+
+  /** The entity of each written light for a key (palette, speed…). */
   private _entities(key: "palette" | "speed" | "intensity"): string[] {
-    return this._links
+    return this._writeLinks
       .map((link) => link[key])
       .filter((id): id is string => Boolean(id));
   }
 
   private get _deviceId(): string | undefined {
-    return typeof this._link === "object" ? this._link.deviceId : undefined;
+    return this._primary?.deviceId;
   }
 
   protected override willUpdate(changed: PropertyValues<this>): void {
@@ -298,6 +324,13 @@ export class MoreInfoWledStateCard extends LitElement {
         },
       );
     }
+    // A relative group shows another member when members turn on or off.
+    const primary = this._primary?.entityId;
+    if (primary && this._primaryEntity && primary !== this._primaryEntity) {
+      this._applyCached();
+      this._loadDevice();
+    }
+    this._primaryEntity = primary;
     // HA updated the light (effect, palette, colors…): read the device too.
     const updated = this._stateObj?.last_updated;
     if (changed.has("hass") && updated && updated !== this._lastUpdated) {
@@ -360,7 +393,7 @@ export class MoreInfoWledStateCard extends LitElement {
   }
 
   private _applySegments(segments: WledSegment[]) {
-    const segment = typeof this._link === "object" ? this._link.segment : -1;
+    const segment = this._primary?.segment ?? -1;
     this._segment = segments.find((seg) => seg.id === segment);
   }
 
@@ -368,7 +401,7 @@ export class MoreInfoWledStateCard extends LitElement {
   private async _setSegment(data: SegmentData) {
     const target = this._target;
     if (!target) return;
-    const others = this._links.slice(1).map((link) => ({
+    const others = this._writeLinks.slice(1).map((link) => ({
       ...target,
       entityId: link.entityId,
       deviceId: link.deviceId,
@@ -795,8 +828,7 @@ export class MoreInfoWledStateCard extends LitElement {
     return {
       kind,
       entityId: this._config!.entity,
-      wledEntity:
-        typeof this._link === "object" ? this._link.entityId : undefined,
+      wledEntity: this._primary?.entityId,
       presetEntity: this._presetEntity,
       deviceId: this._deviceError ? undefined : this._deviceId,
       current: this._effectName,
@@ -963,7 +995,7 @@ export class MoreInfoWledStateCard extends LitElement {
           ? this._entities("intensity")
           : [];
     // Through HA when every light has the number entity.
-    if (entities.length && entities.length === this._links.length) {
+    if (entities.length && entities.length === this._writeLinks.length) {
       this.hass!.callService("number", "set_value", {
         entity_id: entities,
         value,

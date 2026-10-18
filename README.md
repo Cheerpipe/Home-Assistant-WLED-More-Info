@@ -68,6 +68,11 @@ shows the WLED controls instead of the native light controls:
   intensity and the effect's options go to every member; the members are
   still listed below, like in the native dialog. The preset row shows when all
   members are on the same device.
+- **[Relative Light Group](https://github.com/Cheerpipe/relative-light-group)**
+  groups of WLED segments too. They follow that integration's rule: colors,
+  effects and the WLED settings go only to the members that are on (to all of
+  them when every member is off), and the card shows the first member that is
+  on.
 
 Everything else in the dialog stays native: header, history, settings, the ⋮
 menu, related, and every other entity. The WLED "main" light (brightness only)
@@ -86,7 +91,8 @@ appearance: plain # plain (like more-info) | card
 
 The same controls as a card, for dashboards and popups. Everything is also in
 the visual editor. `entity` is a **WLED segment light** (`light.wled`,
-`light.wled_segment_1`…) or a **light group of them**. The "main" light WLED
+`light.wled_segment_1`…) or a **light group of them** (Home Assistant's
+light groups or [Relative Light Group](https://github.com/Cheerpipe/relative-light-group)). The "main" light WLED
 creates for multi-segment devices only has a brightness, so it gets the plain
 power and brightness controls, like the native more-info.
 

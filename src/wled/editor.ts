@@ -31,6 +31,7 @@ export const wledCardForm = () => ({
           filter: [
             { domain: "light", integration: "wled" },
             { domain: "light", integration: "group" },
+            { domain: "light", integration: "relative_light_group" },
           ],
         },
       },

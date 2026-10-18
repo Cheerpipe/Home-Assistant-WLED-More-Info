@@ -17,7 +17,7 @@ async def test_adds_the_card_to_every_page(
 ) -> None:
     """The bundle is served and loaded on every page, with its version."""
     assert integration.state is ConfigEntryState.LOADED
-    assert extra_js == {"/wled_more_info/wled-more-info.js?v=0.2.1&replace=1"}
+    assert extra_js == {"/wled_more_info/wled-more-info.js?v=0.3.0&replace=1"}
 
     assert await hass.config_entries.async_unload(integration.entry_id)
     assert extra_js == set()
@@ -55,4 +55,4 @@ async def test_options_turn_the_native_more_info_off(
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     await hass.async_block_till_done()
-    assert extra_js == {"/wled_more_info/wled-more-info.js?v=0.2.1&replace=0"}
+    assert extra_js == {"/wled_more_info/wled-more-info.js?v=0.3.0&replace=0"}
