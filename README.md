@@ -73,6 +73,10 @@ shows the WLED controls instead of the native light controls:
   effects and the WLED settings go only to the members that are on (to all of
   them when every member is off), and the card shows the first member that is
   on.
+- **Groups of groups**, at any depth and mixing both kinds (for example a
+  Relative Light Group of two light groups of WLED segments). Each group
+  applies its own rule on the way down, and the card shows the first WLED
+  light reached that is on.
 
 Everything else in the dialog stays native: header, history, settings, the ⋮
 menu, related, and every other entity. The WLED "main" light (brightness only)

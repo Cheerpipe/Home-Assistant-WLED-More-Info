@@ -39,6 +39,7 @@ import type {
   LovelaceCardConfig,
   LovelaceGridOptions,
 } from "../ha/types";
+import { shownLeaf, writeLeaves } from "../groups";
 import { localize, type TranslationKey } from "../localize/localize";
 import { ensureMoreInfoElements } from "../controls/loader";
 import { POPUP_FILL_EVENT } from "../controls/popup-fill";
@@ -92,9 +93,6 @@ import {
 import { WLED_CARD_EDITOR_TAG } from "./editor";
 
 export const WLED_CARD_TYPE = "more-info-wled-state-card";
-
-/** Cheerpipe/relative-light-group: only members that are on change. */
-const RELATIVE_GROUP = "relative_light_group";
 
 export interface WledCardConfig extends LovelaceCardConfig {
   entity: string;
@@ -256,23 +254,27 @@ export class MoreInfoWledStateCard extends LitElement {
   }
 
   /**
-   * The lights written. A Relative Light Group (relative_light_group)
-   * changes colors and effects of its members that are on only, so the
-   * WLED settings follow it; with every member off, all of them.
+   * The lights a change reaches, following each group of the tree
+   * (`groups.ts`): a Relative Light Group only changes its members that
+   * are on, so the WLED settings follow it.
    */
   private get _writeLinks(): WledLink[] {
     const links = this._links;
-    const platform = this.hass?.entities[this._config?.entity ?? ""]?.platform;
-    if (platform !== RELATIVE_GROUP || links.length < 2) return links;
-    const on = links.filter(
-      (link) => this.hass!.states[link.entityId]?.state === "on",
-    );
-    return on.length ? on : links;
+    if (links.length < 2 || !this.hass || !this._config) return links;
+    const reached = writeLeaves(this.hass, this._config.entity);
+    const written = links.filter((link) => reached.includes(link.entityId));
+    return written.length ? written : links;
   }
 
-  /** The light shown: the first one written. */
+  /** The light shown: the first one written that is on. */
   private get _primary(): WledLink | undefined {
-    return this._writeLinks[0];
+    const links = this._writeLinks;
+    if (!this.hass) return links[0];
+    const shown = shownLeaf(
+      this.hass,
+      links.map((link) => link.entityId),
+    );
+    return links.find((link) => link.entityId === shown);
   }
 
   /** The entity of each written light for a key (palette, speed…). */
@@ -401,11 +403,13 @@ export class MoreInfoWledStateCard extends LitElement {
   private async _setSegment(data: SegmentData) {
     const target = this._target;
     if (!target) return;
-    const others = this._writeLinks.slice(1).map((link) => ({
-      ...target,
-      entityId: link.entityId,
-      deviceId: link.deviceId,
-    }));
+    const others = this._writeLinks
+      .filter((link) => link.entityId !== target.entityId)
+      .map((link) => ({
+        ...target,
+        entityId: link.entityId,
+        deviceId: link.deviceId,
+      }));
     try {
       others.forEach((other) => setSegment(other, data).catch(() => undefined));
       this._applySegments(await setSegment(target, data));

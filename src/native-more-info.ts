@@ -1,6 +1,6 @@
 /**
  * Instance-wide option: Home Assistant's own more-info of every WLED segment
- * light, and of every light group made only of them, shows the WLED card
+ * light, and of every light group made only of them (`groups.ts`), shows the WLED card
  * instead of the native light controls.
  *
  * In the native dialog, `more-info-content` renders the domain's controls
@@ -12,6 +12,7 @@
  * it on every update, hands it to the cards. The WLED "main" light
  * (brightness only) keeps the native controls.
  */
+import { isSegmentLight, segmentLeaves } from "./groups";
 import type { HassEntity, HomeAssistant } from "./ha/types";
 import type { WledCardConfig } from "./wled/wled-card";
 
@@ -35,28 +36,15 @@ type CardElement = HTMLElement & {
 
 type Patchable = { render?: () => unknown; [PATCHED]?: boolean };
 
-const isSegment = (hass: HomeAssistant, entityId: string): boolean => {
-  const entry = hass.entities?.[entityId];
-  return (
-    entityId.startsWith("light.") &&
-    entry?.platform === "wled" &&
-    entry.translation_key === "segment"
-  );
-};
-
-/** WLED segment lights (not the main light) and groups made only of them. */
+/** WLED segment lights (not the main light) and groups made only of them, nested too. */
 export const isWledLight = (
   hass: HomeAssistant | undefined,
   entityId: string | undefined,
 ): boolean => {
   if (!hass || !entityId?.startsWith("light.")) return false;
-  if (isSegment(hass, entityId)) return true;
-  if (hass.entities?.[entityId]?.platform === "wled") return false;
-  const members = hass.states[entityId]?.attributes.entity_id;
   return (
-    Array.isArray(members) &&
-    members.length > 0 &&
-    members.every((member) => isSegment(hass, String(member)))
+    isSegmentLight(hass, entityId) ||
+    Boolean(segmentLeaves(hass, entityId)?.length)
   );
 };
 

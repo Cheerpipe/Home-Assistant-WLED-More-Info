@@ -6,11 +6,13 @@
  * `<mac>_speed_<segment>`, `<mac>_intensity_<segment>`; the main light
  * (brightness only, no effects) is the bare `<mac>`.
  *
- * A light group whose members are all WLED segment lights links to its
- * members: the first one is read, all of them are written.
+ * A light group whose leaves are all WLED segment lights (`groups.ts`,
+ * nested groups included) links to those leaves; which ones a change
+ * reaches depends on the groups (`writeLeaves`).
  */
 import type { HomeAssistant } from "../ha/types";
 import { LoadCache } from "./cache";
+import { segmentLeaves } from "../groups";
 
 export interface WledLink {
   /** The WLED segment light (a member, for a group). */
@@ -80,23 +82,11 @@ export const resolveWledLink = async (
   };
 };
 
-/** Members of a light group, when the entity is one. */
-export const groupMembers = (
-  hass: HomeAssistant,
-  entityId: string,
-): string[] | undefined => {
-  if (hass.entities[entityId]?.platform === "wled") return undefined;
-  const members = hass.states[entityId]?.attributes.entity_id;
-  return Array.isArray(members) && members.length
-    ? (members as string[])
-    : undefined;
-};
-
 const links = new LoadCache<WledLink | WledLinkError>();
 
 /** Cache key of a light's link: a group links again when its members change. */
 export const linkKey = (hass: HomeAssistant, entityId: string): string =>
-  [entityId, ...(groupMembers(hass, entityId) ?? [])].join("|");
+  [entityId, ...(segmentLeaves(hass, entityId) ?? [])].join("|");
 
 /** The link of a light, if it was resolved on this page already. */
 export const cachedLink = (
@@ -115,7 +105,8 @@ const linkLight = async (
   hass: HomeAssistant,
   entityId: string,
 ): Promise<WledLink | WledLinkError> => {
-  const members = groupMembers(hass, entityId);
+  // A group, nested or not: its WLED segment lights.
+  const members = segmentLeaves(hass, entityId);
   if (!members) return resolveWledLink(hass, entityId);
   const links = await Promise.all(
     members.map((member) => resolveWledLink(hass, member)),

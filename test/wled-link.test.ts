@@ -30,7 +30,12 @@ describe("resolveWledLight", () => {
   const hass = (members: string[]) =>
     ({
       entities: {
-        "light.a": { entity_id: "light.a", platform: "wled", device_id: "d1" },
+        "light.a": {
+          entity_id: "light.a",
+          platform: "wled",
+          device_id: "d1",
+          translation_key: "segment",
+        },
         "select.a_palette": {
           entity_id: "select.a_palette",
           platform: "wled",
@@ -40,8 +45,14 @@ describe("resolveWledLight", () => {
           entity_id: "light.main",
           platform: "wled",
           device_id: "d1",
+          translation_key: "main",
         },
-        "light.b": { entity_id: "light.b", platform: "wled", device_id: "d2" },
+        "light.b": {
+          entity_id: "light.b",
+          platform: "wled",
+          device_id: "d2",
+          translation_key: "segment",
+        },
         "select.b_palette": {
           entity_id: "select.b_palette",
           platform: "wled",
