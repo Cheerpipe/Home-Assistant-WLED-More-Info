@@ -9,11 +9,16 @@
  * settings, ⋮ menu, related, the group's members, child views) stays
  * native, and so does every other entity. `more-info-light` gets no `hass`
  * (it reads Home Assistant's contexts), so `more-info-content`, which gets
- * it on every update, hands it to the cards. The WLED "main" light
- * (brightness only) keeps the native controls.
+ * it on every update, hands it to the cards. The registry entry and the
+ * dialog's edit mode (favorite colors) go from `more-info-light` to its
+ * card. The WLED "main" light (brightness only) keeps the native controls.
  */
 import { isSegmentLight, segmentLeaves } from "./groups";
-import type { HassEntity, HomeAssistant } from "./ha/types";
+import type {
+  ExtEntityRegistryEntry,
+  HassEntity,
+  HomeAssistant,
+} from "./ha/types";
 import type { WledCardConfig } from "./wled/wled-card";
 
 /** `WLED_CARD_TYPE`, without loading the card's module here. */
@@ -27,10 +32,15 @@ const PATCHED = Symbol.for("wled-more-info.patched");
 type NativeElement = HTMLElement & {
   hass?: HomeAssistant;
   stateObj?: HassEntity;
+  entry?: ExtEntityRegistryEntry | null;
+  editMode?: boolean;
 };
 
 type CardElement = HTMLElement & {
   hass?: HomeAssistant;
+  inDialog?: boolean;
+  entry?: ExtEntityRegistryEntry | null;
+  editMode?: boolean;
   setConfig(config: WledCardConfig): void;
 };
 
@@ -75,6 +85,10 @@ const cardFor = (host: NativeElement, hass: HomeAssistant, entity: string) => {
   }
   liveCards.add(card);
   card.hass = hass;
+  // The dialog owns the entry and its edit mode (favorite colors).
+  card.inDialog = true;
+  card.entry = host.entry;
+  card.editMode = host.editMode;
   return card;
 };
 

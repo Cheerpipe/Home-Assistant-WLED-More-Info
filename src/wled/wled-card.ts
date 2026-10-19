@@ -4,7 +4,8 @@
  *
  * - The button bar of `more-info-light` switches the main control between
  *   brightness, color and color temperature, and two more: the secondary
- *   (and tertiary) color, and the palettes with their previews.
+ *   (and tertiary) color, and the palettes with their previews. The light's
+ *   favorite colors follow, like in `more-info-light`.
  * - One more mode shows the sliders and options the current effect uses
  *   (speed, intensity, custom sliders), labeled like in WLED.
  * - Below, the effect with its category icons opens a searchable picker
@@ -34,6 +35,7 @@ import { computeStateName } from "../ha/entity";
 import { fireEvent } from "../ha/fire-event";
 import type {
   ChildView,
+  ExtEntityRegistryEntry,
   HassEntity,
   HomeAssistant,
   LovelaceCardConfig,
@@ -145,6 +147,24 @@ export class MoreInfoWledStateCard extends LitElement {
 
   @property({ attribute: false }) accessor hass: HomeAssistant | undefined;
 
+  /**
+   * Set by the native dialog (`native-more-info.ts`), which then gives the
+   * registry entry and its edit mode and handles `toggle-edit-mode` and
+   * `entity-entry-updated`. Elsewhere the card loads the entry itself.
+   */
+  public inDialog = false;
+
+  @property({ attribute: false }) accessor entry:
+    ExtEntityRegistryEntry | null | undefined;
+
+  @property({ attribute: false }) accessor editMode: boolean | undefined;
+
+  /** Registry entry loaded by the card: favorite colors. */
+  @state() accessor _ownEntry: ExtEntityRegistryEntry | null | undefined;
+
+  /** Edit mode of the favorite colors, outside the dialog. */
+  @state() accessor _editing = false;
+
   /** Kept as given so UIX can read `uix:` / `card_mod:` from it. */
   @state() accessor _config: WledCardConfig | undefined;
 
@@ -184,6 +204,8 @@ export class MoreInfoWledStateCard extends LitElement {
 
   private _primaryEntity?: string;
 
+  private _entryLoaded?: string;
+
   public setConfig(config: WledCardConfig): void {
     if (!config?.entity) throw new Error('"entity" is required');
     this._config = config;
@@ -195,6 +217,9 @@ export class MoreInfoWledStateCard extends LitElement {
     this._deviceError = undefined;
     this._mode = "brightness";
     this._pickerOpen = undefined;
+    this._ownEntry = undefined;
+    this._entryLoaded = undefined;
+    this._editing = false;
   }
 
   public getCardSize(): number {
@@ -305,6 +330,7 @@ export class MoreInfoWledStateCard extends LitElement {
         "ha-control-button-group",
       ]).then(() => this.requestUpdate());
     }
+    if (!this.inDialog && this._stateObj) this._loadEntry();
     // A group links again when its members change.
     const key = linkKey(this.hass, this._config.entity);
     if (this._linkKey !== key && this.hass.entities[this._config.entity]) {
@@ -339,6 +365,24 @@ export class MoreInfoWledStateCard extends LitElement {
       this._lastUpdated = updated;
       this._scheduleRefresh();
     }
+  }
+
+  /** Same request as the more-info dialog; null when not allowed. */
+  private _loadEntry() {
+    const entityId = this._config!.entity;
+    if (this._entryLoaded === entityId) return;
+    this._entryLoaded = entityId;
+    this.hass!.callWS<ExtEntityRegistryEntry>({
+      type: "config/entity_registry/get",
+      entity_id: entityId,
+    }).then(
+      (entry) => {
+        if (this._entryLoaded === entityId) this._ownEntry = entry;
+      },
+      () => {
+        if (this._entryLoaded === entityId) this._ownEntry = null;
+      },
+    );
   }
 
   /** What this page already knows about the device, synchronously. */
@@ -511,6 +555,7 @@ export class MoreInfoWledStateCard extends LitElement {
         ${this._header(stateObj)}
         <div class="controls">
           ${this._mainControl(stateObj)} ${this._buttonBar(stateObj)}
+          ${this._favoriteColors(stateObj)}
         </div>
         ${this._config.show_effects === false ? nothing : this._effectsSection(stateObj)}
         ${this._deviceNote()}
@@ -824,6 +869,44 @@ export class MoreInfoWledStateCard extends LitElement {
         }
       </ha-icon-button-group>
     `;
+  }
+
+  // Favorite colors (`more-info-light.ts`) ---------------------------------
+
+  private _favoriteColors(stateObj: HassEntity) {
+    const entry = this.inDialog ? this.entry : this._ownEntry;
+    const editMode = this.inDialog ? this.editMode : this._editing;
+    const favorites = entry?.options?.light?.favorite_colors as
+      unknown[] | null | undefined;
+    const supported =
+      lightSupportsColor(stateObj) || lightSupportsColorTemp(stateObj);
+    const show =
+      entry &&
+      (editMode || (supported && (favorites == null || favorites.length > 0)));
+    if (!show) return nothing;
+    // Outside the dialog, the card plays its part: edit mode and the entry.
+    const toggleEditMode = (ev: CustomEvent<boolean>) => {
+      if (this.inDialog) return;
+      ev.stopPropagation();
+      this._editing = ev.detail;
+    };
+    const entryUpdated = (ev: CustomEvent<ExtEntityRegistryEntry>) => {
+      if (this.inDialog) return;
+      ev.stopPropagation();
+      this._ownEntry = ev.detail;
+    };
+    return html`<ha-more-info-light-favorite-colors
+      .hass=${this.hass}
+      .stateObj=${stateObj}
+      .entry=${entry}
+      .editMode=${editMode}
+      @favorite-color-edit-started=${(ev: Event) => {
+        ev.stopPropagation();
+        this._mode = "brightness";
+      }}
+      @toggle-edit-mode=${toggleEditMode}
+      @entity-entry-updated=${entryUpdated}
+    ></ha-more-info-light-favorite-colors>`;
   }
 
   // Effects -----------------------------------------------------------------

@@ -55,6 +55,9 @@ describe("native more-info", () => {
     "more-info-wled-state-card",
     class extends HTMLElement {
       hass?: HomeAssistant;
+      inDialog?: boolean;
+      entry?: unknown;
+      editMode?: boolean;
       setConfig() {}
     },
   );
@@ -68,6 +71,8 @@ describe("native more-info", () => {
   }
   class FakeLight {
     stateObj?: { entity_id: string };
+    entry?: unknown;
+    editMode?: boolean;
     render() {
       return "native";
     }
@@ -90,12 +95,23 @@ describe("native more-info", () => {
     light.stateObj = { entity_id: "light.wled_main" };
     expect(light.render()).toBe("native");
     light.stateObj = { entity_id: "light.wled_group" };
+    const entry = { entity_id: "light.wled_group" };
+    light.entry = entry;
     const card = light.render() as unknown as HTMLElement & {
       hass?: HomeAssistant;
+      inDialog?: boolean;
+      entry?: unknown;
+      editMode?: boolean;
     };
     expect(card.localName).toBe("more-info-wled-state-card");
     expect(card.hass).toBe(hass);
+    // The dialog's registry entry and edit mode, for the favorite colors.
+    expect(card.inDialog).toBe(true);
+    expect(card.entry).toBe(entry);
+    expect(card.editMode).toBeUndefined();
+    light.editMode = true;
     // Same element on the next render: no flicker, state kept.
     expect(light.render()).toBe(card);
+    expect(card.editMode).toBe(true);
   });
 });

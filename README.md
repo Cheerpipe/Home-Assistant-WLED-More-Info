@@ -118,6 +118,10 @@ it shows:
 The secondary color and palette buttons are disabled when the current effect
 doesn't use them, like WLED hides them in its own interface.
 
+Under the button bar, the light's **favorite colors**, like in the native
+more-info: tap one to apply it; administrators long-press to add, edit, reorder
+or delete them. They are the same favorites as Home Assistant's own dialog.
+
 ### Effects and presets
 
 Under the button bar there are two rows: **Effect** (with the effect's
