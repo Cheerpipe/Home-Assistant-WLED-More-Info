@@ -10,5 +10,5 @@
   "issue_tracker": "https://github.com/Cheerpipe/Home-Assistant-WLED-More-Info/issues",
   "requirements": [],
   "single_config_entry": true,
-  "version": "0.3.1"
+  "version": "0.4.0"
 }

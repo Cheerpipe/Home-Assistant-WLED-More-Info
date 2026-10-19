@@ -1,6 +1,6 @@
 {
   "name": "wled-more-info",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Home Assistant integration with a native-looking more-info card for WLED lights; the device is reached through Home Assistant.",
   "license": "MIT",
   "repository": {
