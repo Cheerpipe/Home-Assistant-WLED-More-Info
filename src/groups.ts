@@ -1,7 +1,7 @@
 /**
  * Light groups of WLED segment lights, nested at any depth: Home
  * Assistant's light groups and Relative Light Groups
- * (Cheerpipe/relative-light-group) both list their members in the
+ * (Cheerpipe/ha-relative-light-group) both list their members in the
  * `entity_id` attribute, and a member can be a group itself. The WLED
  * lights at the bottom of the tree are its leaves.
  */

@@ -5,7 +5,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Cheerpipe/Home-Assistant-WLED-More-Info.git"
+    "url": "git+https://github.com/Cheerpipe/ha-wled-more-info.git"
   },
   "type": "module",
   "private": true,

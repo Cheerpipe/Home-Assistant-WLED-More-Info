@@ -1,8 +1,8 @@
 # WLED More-Info
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
-[![Validate](https://github.com/Cheerpipe/Home-Assistant-WLED-More-Info/actions/workflows/validate.yml/badge.svg)](https://github.com/Cheerpipe/Home-Assistant-WLED-More-Info/actions/workflows/validate.yml)
-[![Tests](https://github.com/Cheerpipe/Home-Assistant-WLED-More-Info/actions/workflows/test.yml/badge.svg)](https://github.com/Cheerpipe/Home-Assistant-WLED-More-Info/actions/workflows/test.yml)
+[![Validate](https://github.com/Cheerpipe/ha-wled-more-info/actions/workflows/validate.yml/badge.svg)](https://github.com/Cheerpipe/ha-wled-more-info/actions/workflows/validate.yml)
+[![Tests](https://github.com/Cheerpipe/ha-wled-more-info/actions/workflows/test.yml/badge.svg)](https://github.com/Cheerpipe/ha-wled-more-info/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A Home Assistant integration with a **more-info card for
@@ -58,7 +58,7 @@ The option can be changed later in the integration's **Configure** button.
 With it off, the more-info stays native and the card is only where you add it.
 
 If you used the WLED card from
-[More-Info Popup Card](https://github.com/Cheerpipe/Home-Assistant-More-Info-Popup-Card)
+[More-Info Popup Card](https://github.com/Cheerpipe/ha-more-info-popup-card)
 0.5 / 0.6, update that card to 0.7 or newer, which no longer includes it.
 Your dashboards keep working: the `type` is the same.
 
@@ -73,7 +73,7 @@ shows the WLED controls instead of the native light controls:
   intensity and the effect's options go to every member; the members are
   still listed below, like in the native dialog. The preset row shows when all
   members are on the same device.
-- **[Relative Light Group](https://github.com/Cheerpipe/relative-light-group)**
+- **[Relative Light Group](https://github.com/Cheerpipe/ha-relative-light-group)**
   groups of WLED segments too. They follow that integration's rule: colors,
   effects and the WLED settings go only to the members that are on (to all of
   them when every member is off), and the card shows the first member that is
@@ -101,7 +101,7 @@ appearance: plain # plain (like more-info) | card
 The same controls as a card, for dashboards and popups. Everything is also in
 the visual editor. `entity` is a **WLED segment light** (`light.wled`,
 `light.wled_segment_1`…) or a **light group of them** (Home Assistant's
-light groups or [Relative Light Group](https://github.com/Cheerpipe/relative-light-group)). The "main" light WLED
+light groups or [Relative Light Group](https://github.com/Cheerpipe/ha-relative-light-group)). The "main" light WLED
 creates for multi-segment devices only has a brightness, so it gets the plain
 power and brightness controls, like the native more-info.
 
@@ -147,7 +147,7 @@ effect list can be filtered by category:
 
 With the option on, you don't need a popup for this. To build your own WLED
 popup with other cards around the WLED card, use
-[More-Info Popup Card](https://github.com/Cheerpipe/Home-Assistant-More-Info-Popup-Card)
+[More-Info Popup Card](https://github.com/Cheerpipe/ha-more-info-popup-card)
 with `entity: this`:
 
 ```yaml

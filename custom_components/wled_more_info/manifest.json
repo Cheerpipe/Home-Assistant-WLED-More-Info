@@ -4,10 +4,10 @@
   "codeowners": ["@Cheerpipe"],
   "config_flow": true,
   "dependencies": ["frontend", "http", "websocket_api", "wled"],
-  "documentation": "https://github.com/Cheerpipe/Home-Assistant-WLED-More-Info",
+  "documentation": "https://github.com/Cheerpipe/ha-wled-more-info",
   "integration_type": "service",
   "iot_class": "local_polling",
-  "issue_tracker": "https://github.com/Cheerpipe/Home-Assistant-WLED-More-Info/issues",
+  "issue_tracker": "https://github.com/Cheerpipe/ha-wled-more-info/issues",
   "requirements": [],
   "single_config_entry": true,
   "version": "0.4.0"

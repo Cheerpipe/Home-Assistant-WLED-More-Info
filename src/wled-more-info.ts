@@ -19,8 +19,7 @@ if (!window.customCards.some((card) => card.type === WLED_CARD_TYPE)) {
     name: localize(undefined, "wled_card.name"),
     description: localize(undefined, "wled_card.description"),
     preview: true,
-    documentationURL:
-      "https://github.com/Cheerpipe/Home-Assistant-WLED-More-Info",
+    documentationURL: "https://github.com/Cheerpipe/ha-wled-more-info",
   });
 }
 
