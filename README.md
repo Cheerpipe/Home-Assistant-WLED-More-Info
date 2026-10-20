@@ -1,5 +1,10 @@
 # WLED More-Info
 
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
+[![Validate](https://github.com/Cheerpipe/Home-Assistant-WLED-More-Info/actions/workflows/validate.yml/badge.svg)](https://github.com/Cheerpipe/Home-Assistant-WLED-More-Info/actions/workflows/validate.yml)
+[![Tests](https://github.com/Cheerpipe/Home-Assistant-WLED-More-Info/actions/workflows/test.yml/badge.svg)](https://github.com/Cheerpipe/Home-Assistant-WLED-More-Info/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 A Home Assistant integration with a **more-info card for
 [WLED](https://kno.wled.ge/) lights**: the native light more-info (same header,
 brightness slider, color wheel, color temperature and button bar), plus what
