@@ -6,10 +6,17 @@ from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.loader import async_get_integration
 from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.wled_more_info.const import DOMAIN
+
+
+async def _module_url(hass: HomeAssistant, replace: int) -> str:
+    """The card's module URL for the installed release."""
+    version = (await async_get_integration(hass, DOMAIN)).version
+    return f"/wled_more_info/wled-more-info.js?v={version}&replace={replace}"
 
 
 async def test_adds_the_card_to_every_page(
@@ -17,7 +24,7 @@ async def test_adds_the_card_to_every_page(
 ) -> None:
     """The bundle is served and loaded on every page, with its version."""
     assert integration.state is ConfigEntryState.LOADED
-    assert extra_js == {"/wled_more_info/wled-more-info.js?v=0.3.1&replace=1"}
+    assert extra_js == {await _module_url(hass, 1)}
 
     assert await hass.config_entries.async_unload(integration.entry_id)
     assert extra_js == set()
@@ -55,4 +62,4 @@ async def test_options_turn_the_native_more_info_off(
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     await hass.async_block_till_done()
-    assert extra_js == {"/wled_more_info/wled-more-info.js?v=0.3.1&replace=0"}
+    assert extra_js == {await _module_url(hass, 0)}

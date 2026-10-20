@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import AsyncGenerator
 from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock, patch
@@ -90,8 +90,8 @@ def wled_entry(hass: HomeAssistant, wled_client: AsyncMock) -> MockConfigEntry:
 
 
 @pytest.fixture
-def extra_js() -> Generator[set[str]]:
-    """URLs added to every page (stands in for the frontend)."""
+async def extra_js(hass: HomeAssistant) -> AsyncGenerator[set[str]]:
+    """URLs added to every page (stands in for the frontend until unloaded)."""
     urls: set[str] = set()
     with (
         patch(
@@ -104,6 +104,8 @@ def extra_js() -> Generator[set[str]]:
         ),
     ):
         yield urls
+        for entry in hass.config_entries.async_entries(DOMAIN):
+            await hass.config_entries.async_unload(entry.entry_id)
 
 
 @pytest.fixture
